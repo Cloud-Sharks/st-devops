@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+
+  user-service-ecs:
+    image: ${AWS_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/st-user-microservice:latest
+    env_file:
+      - .env
+    ports:
+      - ${USER_PORT}:${USER_PORT}
+
+
+  bank-service-ecs:
+    image: ${AWS_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/st-bank-microservice:latest
+    env_file:
+      - .env
+    ports:
+      - ${BANK_PORT}:${BANK_PORT}
+
+
+  underwriter-ecs:
+    image: ${AWS_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/st-underwriter-microservice:latest
+    env_file:
+        - .env
+    ports:
+        - ${UNDERWRITER_PORT}:${UNDERWRITER_PORT}

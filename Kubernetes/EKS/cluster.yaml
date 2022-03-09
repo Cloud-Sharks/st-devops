@@ -1,0 +1,11 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eksctl-st
+  region: us-west-1
+
+nodeGroups:
+  - name: ng-1-workers
+    instanceType: t2.small
+    desiredCapacity: 4

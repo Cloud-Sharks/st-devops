@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  labels:
+    app: aline-db
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: aline-db
+  template:
+    metadata:
+      labels:
+        app: aline-db
+    spec:
+      containers:
+        - name: aline-db
+          image: stevetan/aline-db:1.2
+          resources:
+            limits:
+              memory: 1G
+              cpu: "1"          
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: sql-config
+                  key: db-name
+            - name: MYSQL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mysql_user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets
+                  key: mysql_password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  type: NodePort
+  selector:
+    app: aline-db
+  ports:
+    - port: 3306
+      targetPort: 3306
+      nodePort: 30115

@@ -1,0 +1,78 @@
+
+version: "3.8"
+
+networks:
+  aline_nw:
+    name: aline
+
+services:
+  mysql-db: 
+    image: stevetan/aline-db:1.2
+    env_file:
+      - .env
+    networks:
+      - aline_nw
+    ports: 
+      - 3306:3306
+    container_name: aline-mysql
+
+  user-service:
+    image: 862167864120.dkr.ecr.us-west-1.amazonaws.com/st-user-microservice:latest
+    ports:
+      - '8070:8070'
+    restart: on-failure:3
+    networks:
+      - aline_nw
+    depends_on:
+      - mysql-db
+    env_file:
+    - .env
+    container_name: aline-usermicroservice
+
+  bank:
+    image: 862167864120.dkr.ecr.us-west-1.amazonaws.com/st-bank-microservice:latest
+    ports:
+      - '8071:8071'
+    restart: on-failure:3
+    networks:
+      - aline_nw
+    depends_on:
+      - mysql-db
+    env_file:
+    - .env
+    container_name: aline-bankmicroservice
+
+  underwriter:
+    image: 862167864120.dkr.ecr.us-west-1.amazonaws.com/st-underwriter-microservice:latest
+    ports:
+      - '8073:8073'
+    restart: on-failure:3
+    networks:
+      - aline_nw
+    depends_on:
+      - mysql-db
+    env_file:
+    - .env
+    container_name: aline-underwritermicroservice
+
+
+
+
+
+
+
+
+
+
+
+  # transaction:
+  #   image: stevetan/transaction-microservice:1.1
+  #   ports:
+  #     - '8072:8072'
+  #   networks:
+  #     - aline_nw
+  #   depends_on:
+  #     - mysql-db
+  #   env_file:
+  #   - .env
+  #   container_name: aline-transactionwritermicroservice
