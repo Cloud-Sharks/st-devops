@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: underwriter-microservice
-          image: 862167864120.dkr.ecr.us-west-1.amazonaws.com/st-underwriter-microservice:latest
+          image: ${ECR-shared-repository-Smoothstack}/st-underwriter-microservice:latest
           ports:
             - containerPort: 8093
           env:

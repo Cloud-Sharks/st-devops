@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: user-microservice
-          image: 862167864120.dkr.ecr.us-west-1.amazonaws.com/st-user-microservice:latest
+          image: ${ECR-shared-repository-Smoothstack}/st-user-microservice:latest
           ports:
             - containerPort: 8090
           env:
