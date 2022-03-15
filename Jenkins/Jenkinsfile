@@ -1,21 +1,84 @@
 pipeline {
     agent any
-
+    
+    tools { 
+        maven 'maventest' 
+    }
+    
+    
     stages {
-        stage('Build') {
+        
+        stage('clone repo') {
+            //clones the repo then checkout the branch name given.
             steps {
-                echo 'Building..'
+                git "${GIT_URL}"
+                bat "git checkout ${params.BRANCHNAME}" 
             }
         }
-        stage('Test') {
+        
+        stage('Create core'){
+            //Creates the core file and updates it.
             steps {
-                echo 'Testing..'
+                bat "git submodule init"
+                bat "git submodule update" 
             }
         }
-        stage('Deploy') {
+        
+        stage('Clean test'){
+            //optional mvn clean test
+            when {
+                expression {
+                    params.OPTIONAL_TEST == true
+                }
+            }
             steps {
-                echo 'Deploying....'
+                bat 'mvn clean test'
+            }
+        }
+        
+        stage("Package the Project") {
+            steps {
+                bat "mvn package -D maven.test.skip=true"
+            }
+        }
+        
+        
+        stage("Sonarqube Quality Check") {
+            //sonar test
+            
+            steps{
+                bat "mvn sonar:sonar"
+            }
+            
+        }
+        
+        stage('Build'){
+            //builds the project with docker
+            steps{
+                script {
+                    IMAGE_TAG = "${ECR_URL}/${ECR_REPO_URL}"
+                }
+                
+                bat "docker build -t ${IMAGE_TAG} ."
+            }
+        }
+        stage('Deploy'){
+            //Pushes the image via docker
+            steps {
+                withAWS(credentials: 'AWS_CREDENTIALS', region: 'us-west-1') {
+                     bat "aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin ${ECR_URL}"
+                     bat "docker push ${IMAGE_TAG}"
+                }
             }
         }
     }
+    
+    post {
+        always {
+            bat "mvn clean"
+            bat "docker rmi ${IMAGE_TAG}"
+        }
+    } 
+    
+    
 }
