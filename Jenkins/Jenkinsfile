@@ -5,6 +5,13 @@ pipeline {
         maven 'maventest' 
     }
     
+    environment{
+        GIT_URL = ""
+        BRANCH_NAME = ""
+        ECR_URL = ""
+        ECR_REPO_URL = "" 
+        
+    }
     
     stages {
         
@@ -12,7 +19,7 @@ pipeline {
             //clones the repo then checkout the branch name given.
             steps {
                 git "${GIT_URL}"
-                bat "git checkout ${params.BRANCHNAME}" 
+                bat "git checkout ${BRANCH_NAME}" 
             }
         }
         
@@ -42,24 +49,32 @@ pipeline {
             }
         }
         
-        
         stage("Sonarqube Quality Check") {
-            //sonar test
             
             steps{
                 bat "mvn sonar:sonar"
             }
             
         }
-        
+
+
         stage('Build'){
             //builds the project with docker
+            environment {
+                tag = sh(returnStdout: true, script: "git rev-parse --short=10 HEAD").trim()
+            }
+            
             steps{
+
+                
+
                 script {
                     IMAGE_TAG = "${ECR_URL}/${ECR_REPO_URL}"
+                    IMAGE_TAG_GITCOMMIT = "${ECR_URL}/${ECR_REPO_URL}:${tag}"
                 }
                 
                 bat "docker build -t ${IMAGE_TAG} ."
+                bat "docker tag ${IMAGE_TAG} ${IMAGE_TAG_GITCOMMIT}" 
             }
         }
         stage('Deploy'){
@@ -68,6 +83,7 @@ pipeline {
                 withAWS(credentials: 'AWS_CREDENTIALS', region: 'us-west-1') {
                      bat "aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin ${ECR_URL}"
                      bat "docker push ${IMAGE_TAG}"
+                     bat "docker push ${IMAGE_TAG_GITCOMMIT}"
                 }
             }
         }
@@ -79,6 +95,5 @@ pipeline {
             bat "docker rmi ${IMAGE_TAG}"
         }
     } 
-    
     
 }

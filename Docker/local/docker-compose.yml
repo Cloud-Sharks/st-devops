@@ -14,7 +14,7 @@ services:
       - aline_nw
     ports: 
       - 3306:3306
-    container_name: aline-mysql
+    container_name: local-aline-mysql
 
   user-service:
     image: 862167864120.dkr.ecr.us-west-1.amazonaws.com/st-user-microservice:latest
@@ -27,7 +27,7 @@ services:
       - mysql-db
     env_file:
     - .env
-    container_name: aline-usermicroservice
+    container_name: local-aline-user-microservice
 
   bank:
     image: 862167864120.dkr.ecr.us-west-1.amazonaws.com/st-bank-microservice:latest
@@ -40,7 +40,7 @@ services:
       - mysql-db
     env_file:
     - .env
-    container_name: aline-bankmicroservice
+    container_name: local-aline-bank-microservice
 
   underwriter:
     image: 862167864120.dkr.ecr.us-west-1.amazonaws.com/st-underwriter-microservice:latest
@@ -53,7 +53,7 @@ services:
       - mysql-db
     env_file:
     - .env
-    container_name: aline-underwritermicroservice
+    container_name: local-aline-underwriter-microservice
 
 
 
