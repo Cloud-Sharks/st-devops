@@ -1,0 +1,91 @@
+pipeline {
+    agent any
+    
+    
+    environment{
+
+        GIT_URL = 
+        BRANCH_NAME = "feature"
+        VARS_LOCATION = 
+        AWS_DEFAULT_REGION = 
+
+        AWS_ID = credentials('AWS_ID')
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+        
+    }
+    
+    stages {
+        
+        stage('Clone repo') {
+            
+            steps {
+                git "${GIT_URL}"
+                bat "git checkout ${BRANCH_NAME}"
+                bat "git status"
+                bat "ls"
+            }
+        }
+        
+        stage("Login to ECR/AWS"){
+            steps {
+                bat "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+               
+            }
+        }
+        
+        stage('Download the secrets/config files from s3 bucket'){
+            //The Config Files are located in a s3 bucket for security.
+            steps {
+                dir('Terraform') {
+                    bat "aws s3 cp ${VARS_LOCATION} ./ --recursive"
+                    bat "ls"
+                    
+                }
+            }
+        }
+
+        stage('terraform Init'){
+            steps {
+                dir('Terraform'){
+
+                    bat "terraform init -upgrade"
+            
+                }
+            }
+        }
+        
+        stage('Terraform Plan'){
+             steps {
+                dir('Terraform'){
+
+                    bat "terraform plan > output.txt"
+            
+                }
+            }
+        }
+        
+        stage('Terraform Apply'){
+            steps{
+                dir('Terraform'){
+                   script{
+                       //If there is no changes then do nothing
+                       if (readFile('output.txt').contains('no changes are needed')){
+                           stage ('No Changes for Plan/Do nothing') {
+                                bat 'echo No changes'
+                            }
+                       }
+                       else {
+                        stage ('Changes for terra Plan. Run Apply') {
+                            bat 'terraform apply --auto-approve'
+                        }
+                    }
+                       
+                       
+                   }
+                }
+            }
+        }
+
+    }
+}

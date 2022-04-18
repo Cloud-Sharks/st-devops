@@ -1,0 +1,74 @@
+
+pipeline {
+    agent any
+    
+    
+    environment{
+
+        GIT_URL = 
+        BRANCH_NAME = 
+        ENV_FILEPATH = //Location of the S3 Bucket for ENV Variables
+        AWS_DEFAULT_REGION =  
+        
+        AWS_ID = credentials('AWS_ID')
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+        
+    }
+    
+    stages {
+        
+        stage('Verify Tools'){
+            steps {
+                bat "docker version"
+                bat "docker-compose version"
+            }
+            
+        }
+        
+        stage('Clone repo') {
+            
+            steps {
+                git "${GIT_URL}"
+                bat "git checkout ${BRANCH_NAME}"
+            }
+        }
+        
+        stage("Login to ECR/AWS"){
+            steps {
+                bat "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+               
+            }
+        }
+        
+        stage('Download the ENV files from s3 bucket'){
+            //The Config Files are located in a s3 bucket for security.
+            steps {
+                dir('Docker/ECS-Context') {
+                    bat "aws s3 cp ${ENV_FILEPATH} ./"
+                    
+                }
+            }
+        }
+        
+        stage('Switch ECS Context'){
+            //Switches to the ECS context that has the ECS Deployment
+            steps {
+                bat "docker context ls"
+                bat "docker context use st-aline"
+            }
+        }
+        
+        stage("Run Docker Compose"){
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    //Updates the docker deployments using docker compose up. Catches error due to No changeset.
+                    dir('Docker/ECS-Context') {
+                        bat "docker compose up"
+                    }
+                }
+            }
+            
+        }
+    }
+}

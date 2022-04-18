@@ -1,0 +1,62 @@
+pipeline {
+    agent any
+    
+    
+    environment{
+
+        GIT_URL = 
+        BRANCH_NAME = 
+        SECRETS_LOCATION = //Location of the S3 Bucket for Secrets
+        AWS_DEFAULT_REGION =  
+
+        CLUSTER_NAME = 
+        AWS_ID = credentials('AWS_ID')
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+        
+    }
+    
+    stages {
+        
+        stage('Clone repo') {
+            
+            steps {
+                git "${GIT_URL}"
+                bat "git checkout ${BRANCH_NAME}"
+            }
+        }
+        
+        stage("Login to ECR/AWS"){
+            steps {
+                bat "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+               
+            }
+        }
+        
+        stage('Download the secrets/config files from s3 bucket'){
+            //The Config Files are located in a s3 bucket for security.
+            steps {
+                dir('Kubernetes/EKS') {
+                    bat "aws s3 cp ${SECRETS_LOCATION} ./"
+                    bat "aws s3 cp ${CONFIG_LOCATION} ./"
+                    
+                }
+            }
+        }
+
+        stage('Update Deployments'){
+            //Run Apply on Secrets/Configmap as well as the individual microservices
+            
+            steps {
+                dir('kubernetes/EKS'){
+
+                    bat "aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name ${CLUSTER_NAME}"
+                    bat "kubectl get deployments"
+                    bat "kubectl create configmap mysql --from-file=sql-config.yml"
+                }
+            }
+        }
+
+
+    }
+}
