@@ -65,11 +65,12 @@ terraform {
  resource "aws_eip" "lb" {
    vpc   = true
  }
- # Creating the NAT Gateway using subnet_id and allocation_id
- resource "aws_nat_gateway" "NATgw" {
-   allocation_id = aws_eip.lb.id
-   subnet_id = aws_subnet.publicsubnets.id
- }
+ 
+# Creating the NAT Gateway using subnet_id and allocation_id
+# resource "aws_nat_gateway" "NATgw" {
+#   allocation_id = aws_eip.lb.id
+#   subnet_id = aws_subnet.publicsubnets.id
+# }
 
  resource "aws_security_group" "allow_ssh" {
    name = "allow_ssh"

@@ -1,0 +1,9 @@
+- name: create a VPC with dedicated tenancy and a couple of tags
+  amazon.aws.ec2_vpc_net:
+    name: ansible_vpc
+    cidr_block: 10.10.0.0/16
+    region: us-west-2
+    tags:
+      module: ec2_vpc_net
+      this: works
+    tenancy: dedicated

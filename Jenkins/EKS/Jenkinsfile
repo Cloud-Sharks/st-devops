@@ -7,6 +7,7 @@ pipeline {
         GIT_URL = 
         BRANCH_NAME = 
         SECRETS_LOCATION = //Location of the S3 Bucket for Secrets
+        CONFIG_LOCATION
         AWS_DEFAULT_REGION =  
 
         CLUSTER_NAME = 
@@ -38,21 +39,21 @@ pipeline {
             steps {
                 dir('Kubernetes/EKS') {
                     bat "aws s3 cp ${SECRETS_LOCATION} ./"
-                    bat "aws s3 cp ${CONFIG_LOCATION} ./"
                     
                 }
             }
         }
 
         stage('Update Deployments'){
-            //Run Apply on Secrets/Configmap as well as the individual microservices
-            
             steps {
                 dir('kubernetes/EKS'){
 
                     bat "aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name ${CLUSTER_NAME}"
                     bat "kubectl get deployments"
-                    bat "kubectl create configmap mysql --from-file=sql-config.yml"
+                    bat "kubectl apply -f eks-secrets.yml"
+                    bat "kubectl apply -f EKS.Bank-microservice.yml"
+                    bat "kubectl apply -f EKS-User-microservice.yml"
+                    bat "kubectl apply -f EKS-underwriter-microservice.yml"
                 }
             }
         }

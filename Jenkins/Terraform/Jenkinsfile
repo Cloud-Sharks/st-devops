@@ -76,6 +76,7 @@ pipeline {
                             }
                        }
                        else {
+                        //There are changes so run terraform Apply using auto approve.
                         stage ('Changes for terra Plan. Run Apply') {
                             bat 'terraform apply --auto-approve'
                         }
