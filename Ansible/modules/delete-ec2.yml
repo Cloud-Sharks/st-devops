@@ -15,7 +15,8 @@
         region: "{{ aws_region }}"
         filters:
           "tag:Type": "bastion-host"
-      register: ec2_facts
+      register: ec2
+      
     - name: Task2 # Kill EC2 Instance
       ec2:
       instance_ids: "{{ ec2.instances[0].instance_id}}"
