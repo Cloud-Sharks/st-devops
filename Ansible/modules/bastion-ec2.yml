@@ -13,7 +13,7 @@
      group: webserver
      count: 1
      region: us-west-2
-     security_group: st-jenkins-security-grp
+     security_group: st-bastion-security-grp
    
    tasks:
    
@@ -55,4 +55,4 @@
        with_items: "{{ ec2.instances }}"
        args:
          tags:
-           Name: MyTargetEc2Instance
+           Name: bastion-host
