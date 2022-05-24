@@ -56,3 +56,8 @@
        args:
          tags:
            Name: bastion-host
+     - name: Task # 4 Add new instance to host group 
+       add_host:
+        hostname: "{{ item.public_ip }}"
+        groupname: launched
+       loop: "{{ ec2.instances }}"
