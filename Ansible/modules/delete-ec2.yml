@@ -1,0 +1,31 @@
+---
+- name: Terminate EC2 instances
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  
+  vars:
+    aws_region: "us-west-2"
+    ec2_tags:
+      Name: "bastion-host"
+      
+  tasks:
+    - name: Find EC2 Facts
+      ec2_remote_facts:
+        region: "{{ aws_region }}"
+      register: ec2_facts
+
+    - name: Filter EC2 instances
+      set_fact:
+        ec2_instances: |
+          {% set instances = [] %}
+          {% for item in ec2_facts.instances if item.tags == ec2_tags and item.state == 'running' -%}
+            {{ instances.append(item.id) }}
+          {%- endfor %}
+          {{ instances }}
+    - name: Terminate EC2 server
+      ec2:
+        region: "{{ aws_region }}"
+        instance_ids: "{{ item }}"
+        state: 'absent'
+      with_items: "{{ ec2_instances }}"
