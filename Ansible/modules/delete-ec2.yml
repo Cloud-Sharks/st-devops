@@ -12,7 +12,7 @@
     ec2_instance_info:
       region: "{{ aws_region }}"
       filters:
-        "tag:Type": "bastion-host"
+        "tag:Name": "bastion-host"
     register: ec2_bastion
 
   - name: Kill EC2 Instance
