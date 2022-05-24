@@ -79,3 +79,10 @@
        args:
          tags:
            Name: MyTargetEc2Instance
+    - name: Task # 4 Add new instance to host group 
+      add_host:
+        hostname: "{{ item.public_ip }}"
+        groupname: launched
+      loop: "{{ ec2.instances }}"
+
+    
