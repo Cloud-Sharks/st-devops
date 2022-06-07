@@ -1,6 +1,5 @@
 - hosts: all
   become: true
-  gather_facts: false
   tasks:
   - name: Install docker packages
     remote_user: ubuntu
