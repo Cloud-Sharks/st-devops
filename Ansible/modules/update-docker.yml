@@ -6,4 +6,8 @@
       yum:
         name: docker
         state: latest
+    - name: Update Docker Compose package
+      yum:
+        name: docker-compose
+        state: latest
 
