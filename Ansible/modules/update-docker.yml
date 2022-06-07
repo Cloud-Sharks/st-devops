@@ -1,0 +1,10 @@
+- name: Update all packages
+  hosts: all
+  become: true
+  tasks:
+    - name: Update docker packages
+      apt:
+        name: docker
+        state: latest
+        update_cache: yes
+        force_apt_get: yes
