@@ -6,8 +6,14 @@
       yum:
         name: docker
         state: latest
-    - name: Update Docker Compose package
-      yum:
-        name: docker-compose
-        state: latest
+    - name: Check current docker-compose version
+      command: docker-compose --version
+      register: docker_compose_vsn
+      changed_when: false
+      failed_when: false
+      check_mode: no
 
+    - set_fact:
+        docker_compose_current_version: "{{ docker_compose_vsn.stdout | regex_search('(\\d+(\\.\\d+)+)') }}"
+      when:
+        - docker_compose_vsn.stdout is defined
