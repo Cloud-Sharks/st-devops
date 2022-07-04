@@ -11,7 +11,7 @@
       register: ec2_key
 
     - name: Save private key
-      copy: content="{{ ec2_key.key.private_key }}" dest="../{{ ec2_key.key.private_key }}.pem" mode=0400
+      copy: content="{{ ec2_key.key.private_key }}" dest="../artifactory-server.pem" mode=0400
       when: ec2_key.changed
       
     - name: Launch instance
