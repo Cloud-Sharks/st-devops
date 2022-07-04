@@ -1,0 +1,75 @@
+- name: Create an Artifactory server
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: Launch instance
+      ec2:
+         region: "{{ region }}"
+         key_name: "{{ keypair }}"
+         group: "{{ security_group }}"
+         instance_type: t3a.large
+         image: ami-098e42ae54c764c35
+         wait: yes
+         wait_timeout: 300
+         count: 1  
+         aws_access_key: "{{ access_key }}"
+         aws_secret_key: "{{ secret_key }}"
+         vpc_subnet_id: "{{ subnet }} "
+         assign_public_ip: yes
+         instance_tags:
+           Name: artifactory-server-st
+           Environment: "{{ env_name }}"
+      register: ec2
+
+    - name: Add new instance to host group
+      add_host:
+        hostname: "{{ item.public_ip }}"
+        groupname: launched
+      loop: "{{ ec2.instances }}"
+
+    - name: Wait for SSH to come up
+      delegate_to: localhost
+      wait_for:
+        timeout: 100
+
+- name: Install packages
+  hosts: launched
+  become: yes
+  tasks:
+    - name: Install required system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: latest
+        update_cache: true
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Make sure docker is running
+      service:
+        name: docker
+        state: started
+      become: true
+
+    - name: "Pull artifactory docker image"
+      command: "docker pull docker.bintray.io/jfrog/artifactory-pro:latest"
+
+    - name: "Start artifactory container"
+      command: "docker run --name artifactory -d -p 8081:8081 -p 8082:8082 docker.bintray.io/jfrog/artifactory-pro:latest"
