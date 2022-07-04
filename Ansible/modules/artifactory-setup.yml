@@ -1,6 +1,8 @@
 - name: Create an Artifactory server
   hosts: localhost
-  gather_facts: False
+  connection: local
+
+
   tasks:
     - name: Create an EC2 key
       ec2_key:
@@ -9,13 +11,13 @@
       register: ec2_key
 
     - name: Save private key
-      copy: content="{{ ec2_key.key.private_key }}" dest="../aws-private.pem" mode=0600
+      copy: content="{{ ec2_key.key.private_key }}" dest="../{{ ec2_key.key.private_key }}.pem" mode=0400
       when: ec2_key.changed
       
     - name: Launch instance
       ec2:
          region: "{{ region }}"
-         key_name: "{{ keypair }}"
+         key_name: ec2_key
          group: "{{ security_group }}"
          instance_type: t3a.large
          image: ami-098e42ae54c764c35
