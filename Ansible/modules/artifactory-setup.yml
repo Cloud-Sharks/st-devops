@@ -15,7 +15,7 @@
     - name: Launch instance
       ec2:
          region: "{{ region }}"
-         key_name: ec2_key
+         key_name: "{{ keypair }}"
          group: "{{ security_group }}"
          instance_type: t3a.large
          image: ami-098e42ae54c764c35
