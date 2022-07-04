@@ -12,13 +12,8 @@
          wait: yes
          wait_timeout: 300
          count: 1  
-         aws_access_key: "{{ access_key }}"
-         aws_secret_key: "{{ secret_key }}"
-         vpc_subnet_id: "{{ subnet }} "
-         assign_public_ip: yes
          instance_tags:
            Name: artifactory-server-st
-           Environment: "{{ env_name }}"
       register: ec2
 
     - name: Add new instance to host group
