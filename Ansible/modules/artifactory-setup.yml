@@ -2,6 +2,16 @@
   hosts: localhost
   gather_facts: False
   tasks:
+    - name: Create an EC2 key
+      ec2_key:
+        name: "{{ keypair }}"
+        region: "{{ region }}"
+      register: ec2_key
+
+    - name: Save private key
+      copy: content="{{ ec2_key.key.private_key }}" dest="../aws-private.pem" mode=0600
+      when: ec2_key.changed
+      
     - name: Launch instance
       ec2:
          region: "{{ region }}"
