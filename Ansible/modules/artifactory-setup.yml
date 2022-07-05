@@ -1,4 +1,4 @@
-- name: Create an Artifactory server
+- name: Create an Artifactory Server
   hosts: localhost
   connection: local
 
@@ -7,6 +7,7 @@
   #   instance_type: t2.micro
   #   image: ami-0d70546e43a941d70
   #   region: 
+  #   security group
 
   tasks:
     - name: Create an EC2 key
@@ -27,7 +28,7 @@
          instance_type: "{{ instance_type }}"
          image: "{{image}}"
          wait: yes
-         wait_timeout: 300
+         wait_timeout: 250
          count: 1  
          instance_tags:
            Name: artifactory-server-st
@@ -36,70 +37,77 @@
     - name: Add new instance to host group
       add_host:
         hostname: "{{ item.public_ip }}"
-        groupname: launched
+        groupname: launched_instances
       loop: "{{ ec2.instances }}"
 
     - name: Wait for SSH to come up
       delegate_to: localhost
       wait_for:
-        timeout: 60
+        timeout: 70
 
-    - name: Update all packages
-      become: true
-      yum:
-        name: '*'
-        state: latest
-        update_only: yes
+    
 
-    - name: Ensure a list of yum packages are installed
-      yum:
-        name: "{{ packages }}"
-        state: latest
-        update_cache: yes
-      vars:
-        packages:
-        - python-pip
-        - yum-utils
-        - device-mapper-persistent-data
-        - lvm2
-        - amazon-linux-extras
+  - name: Docker installation and artifactory
+    hosts: launched_instances
+    become: yes
+      tasks:
+      - name: Update Packages
+        yum:
+          name: '*'
+          state: latest
+          update_only: yes
 
-    - name: Add extras repository
-      shell: yum-config-manager --enable extras
 
-    - name: Enable Some packages from amazon-linux-extras packages
-      shell: "amazon-linux-extras enable python3.8 ansible2 docker"
+      - name: Ensure a list of yum packages are installed
+        yum:
+          name: "{{ packages }}"
+          state: latest
+          update_cache: yes
+        vars:
+          packages:
+          - python-pip
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+          - amazon-linux-extras
 
-    - name: clean yum metadata cache
-      command: yum clean metadata
-      args:
-        warn: false
+      - name: Add extras repository
+        shell: yum-config-manager --enable extras
 
-    - name: Ensure a list of yum packages are installed
-      yum:
-        name: "{{ packages }}"
-        state: latest
-        update_cache: yes
-      vars:
-        packages:
-        - python3.8
-        - ansible
-        - docker
+      - name: Enable Some packages from amazon-linux-extras packages
+        shell: "amazon-linux-extras enable python3.8 ansible2 docker"
 
-    - name: Enable Docker CE service at startup
-      service:
-        name: docker
-        state: started
-        enabled: yes
+      - name: clean yum metadata cache
+        command: yum clean metadata
+        args:
+          warn: false
 
-    - name: Make sure docker is running
-      service:
-        name: docker
-        state: started
-      become: true
+      - name: Ensure a list of yum packages are installed
+        yum:
+          name: "{{ packages }}"
+          state: latest
+          update_cache: yes
+          become: true
+        vars:
+          packages:
+          - python3.8
+          - ansible
+          - docker
 
-    - name: "Pull artifactory docker image"
-      command: "docker pull docker.bintray.io/jfrog/artifactory-pro:latest"
+      - name: Enable Docker CE service at startup
+        service:
+          name: docker
+          state: started
+          enabled: yes
 
-    - name: "Start artifactory container"
-      command: "docker run --name artifactory -d -p 8081:8081 -p 8081:8081 docker.bintray.io/jfrog/artifactory-pro:latest"
+      - name: Make sure docker is running
+        service:
+          name: docker
+          state: started
+
+
+      - name: "Pull artifactory docker image"
+        command: "docker pull docker.bintray.io/jfrog/artifactory-pro:latest"
+
+      - name: "Start artifactory container"
+        command: "docker run --name artifactory -d -p 8081:8081 -p 8081:8081 docker.bintray.io/jfrog/artifactory-pro:latest"
