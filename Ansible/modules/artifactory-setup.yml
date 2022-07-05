@@ -110,4 +110,4 @@
     command: "docker pull docker.bintray.io/jfrog/artifactory-pro:latest"
 
   - name: "Start artifactory container"
-    command: "docker run --name artifactory -d -p 8081:8081 -p 8081:8081 docker.bintray.io/jfrog/artifactory-pro:latest"
+    command: "docker run --name artifactory -d -p 8081:8081 -p 8082:8082 docker.bintray.io/jfrog/artifactory-pro:latest"
