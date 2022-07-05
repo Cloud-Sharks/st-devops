@@ -2,6 +2,11 @@
   hosts: localhost
   connection: local
 
+  # vars:
+  #   keypair: 
+  #   instance_type: t2.micro
+  #   image: ami-0d70546e43a941d70
+  #   region: 
 
   tasks:
     - name: Create an EC2 key
@@ -11,7 +16,7 @@
       register: ec2_key
 
     - name: Save private key
-      copy: content="{{ ec2_key.key.private_key }}" dest="../artifactory-server.pem" mode=0400
+      copy: content="{{ ec2_key.key.private_key }}" dest="../{{ ec2_key.key.private_key }}.pem" mode=0400
       when: ec2_key.changed
       
     - name: Launch instance
@@ -19,8 +24,8 @@
          region: "{{ region }}"
          key_name: "{{ keypair }}"
          group: "{{ security_group }}"
-         instance_type: t3a.large
-         image: ami-098e42ae54c764c35
+         instance_type: "{{ instance_type }}"
+         image: "{{image}}"
          wait: yes
          wait_timeout: 300
          count: 1  
