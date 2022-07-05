@@ -42,37 +42,54 @@
     - name: Wait for SSH to come up
       delegate_to: localhost
       wait_for:
-        timeout: 100
+        timeout: 60
 
-- name: Install packages
-  hosts: launched
-  become: yes
-  tasks:
-    - name: Install required system packages
-      apt:
-        pkg:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - software-properties-common
+    - name: Update all packages
+      yum:
+        name: '*'
         state: latest
-        update_cache: true
+        update_only: yes
 
-    - name: Add Docker GPG apt Key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-
-    - name: Add Docker Repository
-      apt_repository:
-        repo: deb https://download.docker.com/linux/ubuntu focal stable
-        state: present
-
-    - name: Install docker-ce
-      apt:
-        name: docker-ce
+    - name: Ensure a list of yum packages are installed
+      yum:
+        name: "{{ packages }}"
         state: latest
-        update_cache: true
+        update_cache: yes
+      vars:
+        packages:
+        - python-pip
+        - yum-utils
+        - device-mapper-persistent-data
+        - lvm2
+        - amazon-linux-extras
+
+    - name: Add extras repository
+      shell: yum-config-manager --enable extras
+
+    - name: Enable Some packages from amazon-linux-extras packages
+      shell: "amazon-linux-extras enable python3.8 ansible2 docker"
+
+    - name: clean yum metadata cache
+      command: yum clean metadata
+      args:
+        warn: false
+
+    - name: Ensure a list of yum packages are installed
+      yum:
+        name: "{{ packages }}"
+        state: latest
+        update_cache: yes
+      vars:
+        packages:
+        - python3.8
+        - ansible
+        - docker
+
+    - name: Enable Docker CE service at startup
+      service:
+        name: docker
+        state: started
+        enabled: yes
 
     - name: Make sure docker is running
       service:
@@ -84,4 +101,4 @@
       command: "docker pull docker.bintray.io/jfrog/artifactory-pro:latest"
 
     - name: "Start artifactory container"
-      command: "docker run --name artifactory -d -p 8081:8081 -p 8082:8082 docker.bintray.io/jfrog/artifactory-pro:latest"
+      command: "docker run --name artifactory -d -p 8081:8081 -p 8081:8081 docker.bintray.io/jfrog/artifactory-pro:latest"
