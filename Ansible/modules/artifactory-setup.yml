@@ -45,19 +45,17 @@
         timeout: 60
 
     - name: Update all packages
-
+      become: true
       yum:
         name: '*'
         state: latest
         update_only: yes
-        become: true
 
     - name: Ensure a list of yum packages are installed
       yum:
         name: "{{ packages }}"
         state: latest
         update_cache: yes
-        become: true
       vars:
         packages:
         - python-pip
@@ -82,7 +80,6 @@
         name: "{{ packages }}"
         state: latest
         update_cache: yes
-        become: true
       vars:
         packages:
         - python3.8
