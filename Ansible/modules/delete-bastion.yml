@@ -1,0 +1,22 @@
+---
+- name: Terminate EC2 instances
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  
+  vars:
+    aws_region: "us-west-2"
+
+  tasks:
+  - name: Gather Bastion Instance EC2 Facts.
+    ec2_instance_info:
+      region: "{{ aws_region }}"
+      filters:
+        "tag:Name": "bastion-host"
+    register: ec2_bastion
+
+  - name: Kill EC2 Instance
+    ec2:
+      instance_ids: "{{ ec2_bastion.instances[0].instance_id }}"
+      state: absent
+      region: "{{ aws_region }}"

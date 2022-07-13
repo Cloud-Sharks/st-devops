@@ -17,18 +17,18 @@ services:
     ports:
       - ${BANK_PORT}:${BANK_PORT}
 
-
   underwriter-ecs:
     image: ${AWS_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/st-underwriter-microservice:latest
     env_file:
         - .env
     ports:
         - ${UNDERWRITER_PORT}:${UNDERWRITER_PORT}
+    
+  transaction-ecs:
+    image: ${AWS_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/st-transaction-microservice:latest
+    env_file:
+      - .env
+    ports:
+      - ${TRANSACTION_PORT}:${TRANSACTION_PORT}
 
-
-  # transaction-ecs:
-  #   image: ${AWS_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/st-transaction-microservice:latest
-  #   env_file:
-  #       - .env
-  #   ports:
-  #       - ${TRANSACTION_PORT}:${TRANSCATION_PORT}
+  

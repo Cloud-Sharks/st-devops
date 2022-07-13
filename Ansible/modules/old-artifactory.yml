@@ -1,0 +1,133 @@
+- name: Create an Artifactory server
+  hosts: localhost
+  connection: local
+
+  # vars:
+  #   keypair: 
+  #   instance_type: t2.micro
+  #   image: ami-0d70546e43a941d70
+  #   region: 
+
+  tasks:
+    - name: Create an EC2 key
+      ec2_key:
+        name: "{{ keypair }}"
+        region: "{{ region }}"
+      register: ec2_key
+
+    - name: Save private key
+      copy: content="{{ ec2_key.key.private_key }}" dest="../{{ ec2_key.key.private_key }}.pem" mode=0400
+      when: ec2_key.changed
+      
+    - name: Launch instance
+      ec2:
+         region: "{{ region }}"
+         key_name: "{{ keypair }}"
+         group: "{{ security_group }}"
+         instance_type: "{{ instance_type }}"
+         image: "{{image}}"
+         wait: yes
+         wait_timeout: 300
+         count: 1  
+         instance_tags:
+           Name: artifactory-server-st
+      register: ec2
+
+    - name: Add new instance to host group
+      add_host:
+        hostname: "{{ item.public_ip }}"
+        groupname: launched
+      loop: "{{ ec2.instances }}"
+
+    - name: Wait for SSH to come up
+      delegate_to: localhost
+      wait_for:
+        timeout: 60
+
+    - name: Update all packages
+      yum:
+        name: '*'
+        state: latest
+        update_only: yes
+
+    - name: Ensure a list of yum packages are installed
+      yum:
+        name: "{{ packages }}"
+        state: latest
+        update_cache: yes
+      vars:
+        packages:
+        - python-pip
+        - yum-utils
+        - device-mapper-persistent-data
+        - lvm2
+        - amazon-linux-extras
+
+    - name: Add extras repository
+      shell: yum-config-manager --enable extras
+
+    - name: Enable Some packages from amazon-linux-extras packages
+      shell: "amazon-linux-extras enable python3.8 ansible2 docker"
+
+    - name: clean yum metadata cache
+      command: yum clean metadata
+      args:
+        warn: false
+
+    - name: Ensure a list of yum packages are installed
+      yum:
+        name: "{{ packages }}"
+        state: latest
+        update_cache: yes
+      vars:
+        packages:
+        - python3.8
+        - ansible
+        - docker
+
+    - name: Enable Docker CE service at startup
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+- name: Install packages
+  hosts: launched
+  become: yes
+  tasks:
+    - name: Install required system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: latest
+        update_cache: true
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Make sure docker is running
+      service:
+        name: docker
+        state: started
+      become: true
+
+    - name: "Pull artifactory docker image"
+      command: "docker pull docker.bintray.io/jfrog/artifactory-pro:latest"
+
+    - name: "Start artifactory container"
