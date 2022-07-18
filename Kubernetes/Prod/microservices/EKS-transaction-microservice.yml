@@ -1,29 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
-  name: bank-microservice-deployment
+  name: transaction-microservice-deployment
   labels:
-    app: bank-microservice
+    app: transaction-microservice
 spec:
   replicas: 1
   revisionHistoryLimit: 1
   selector:
     matchLabels:
-      app: bank-microservice
+      app: transaction-microservice 
   template:
     metadata:
       labels:
-        app: bank-microservice
+        app: transaction-microservice
     spec:
       containers:
-        - name: bank-microservice
-          image: ${ECR-shared-repository-Smoothstack}/st-bank-microservice:latest
+        - name: transaction-microservice
+          image: 862167864120.dkr.ecr.us-west-1.amazonaws.com/st-transaction-microservice:latest
           ports:
-            - containerPort: 8091
+            - containerPort: 8090
           env:
             - name: APP_PORT
-              value: "8091"
+              value: "8090"
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -59,16 +58,17 @@ spec:
                 configMapKeyRef:
                   name: sql-config
                   key: db-name
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: bank-microservice
+  name: transaction-microservice
 spec:
   type: NodePort
   selector:
-    app: bank-microservice
+    app: transaction-microservice
   ports:
-    - port: 8073
-      targetPort: 8073
-      nodePort: 30103
+    - port: 8069
+      targetPort: 8069
+      nodePort: 30107

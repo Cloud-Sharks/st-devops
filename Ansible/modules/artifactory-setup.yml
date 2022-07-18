@@ -45,8 +45,6 @@
       wait_for:
         timeout: 70
 
-    
-
 - name: Docker installation and artifactory
   hosts: launched_instances
   become: yes

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sql-config
+data:
+  db-host: my-url-to-db.my-region-1.rds.amazonaws.com # Url to DB
+  db-port: "1234" # port number
+  db-name: "My DB Name"
