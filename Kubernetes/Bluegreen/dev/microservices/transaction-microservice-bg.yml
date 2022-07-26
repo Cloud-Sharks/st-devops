@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-deployment-${DEPLOYMENT_COLOR}
+  namespace: st-aline
+  labels:
+    app: transaction-${DEPLOYMENT_COLOR}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: transaction-${DEPLOYMENT_COLOR}
+  template:
+    metadata:
+      labels:
+        app: transaction-${DEPLOYMENT_COLOR}
+        role: microservice
+        color: ${DEPLOYMENT_COLOR}
+    spec:
+      containers:
+      - name: aline-transaction-ms
+        image: stevetan/transaction-microservice:1.1
+        ports:
+        - name: transaction-${DEPLOYMENT_COLOR}
+          containerPort: 8072
+        env:
+          - name: APP_PORT
+            value: "8072"
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: mysql_user
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: mysql_password
+          - name: ENCRYPT_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: encrypt-secret-key
+          - name: JWT_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: jwt-secret-key
+          - name: DB_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: sql-config
+                key: db-host
+          - name: DB_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: sql-config
+                key: db-port
+          - name: DB_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: sql-config
+                key: db-name

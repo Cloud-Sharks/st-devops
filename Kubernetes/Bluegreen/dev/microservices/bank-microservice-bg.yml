@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bank-deployment-${DEPLOYMENT_COLOR}
+  namespace: st-aline
+  labels:
+    app: bank-${DEPLOYMENT_COLOR}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: bank-${DEPLOYMENT_COLOR}
+  template:
+    metadata:
+      labels:
+        app: bank-${DEPLOYMENT_COLOR}
+        role: microservice
+        color: ${DEPLOYMENT_COLOR}
+    spec:
+      containers:
+      - name: aline-bank-ms
+        image: stevetan/bank-microservice:1.4
+        ports:
+        - name: bank-${DEPLOYMENT_COLOR}
+          containerPort: 8091
+        env:
+          - name: APP_PORT
+            value: "8091"
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: mysql_user
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: mysql_password
+          - name: ENCRYPT_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: encrypt-secret-key
+          - name: JWT_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: jwt-secret-key
+          - name: DB_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: sql-config
+                key: db-host
+          - name: DB_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: sql-config
+                key: db-port
+          - name: DB_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: sql-config
+                key: db-name

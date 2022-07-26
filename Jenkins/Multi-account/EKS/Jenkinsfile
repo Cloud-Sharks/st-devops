@@ -1,0 +1,86 @@
+pipeline {
+    agent any
+    
+    environment{
+        GIT_URL = "https://github.com/Cloud-Sharks/st-devops"
+        BRANCH_NAME = "terraform"
+        
+        CLUSTER_NAME = ""
+        AWS_DEFAULT_REGION = ""
+        SECRETS_LOCATION=""
+        CONFIG_LOCATION=""
+        
+        AWS_ID = credentials('AWS_ID')
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+        
+        AWS_ID_BEB = credentials('AWS_ID_BEB')
+    }
+    
+    stages {
+        
+        stage('Clone repo') {
+            //clones the repo then checkout the branch name given.
+            steps {
+                git "${GIT_URL}"
+                bat "git checkout ${BRANCH_NAME}"
+            }
+        }
+        stage("Login to ECR"){
+            //Login to the AWS as well as Docker
+            steps {
+                bat "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+            }
+        }
+ 
+        stage('Download the secrets/config files from s3 bucket'){
+            //The Config Files are located in a s3 bucket for security.
+            steps {
+                dir('Kubernetes/Prod') {
+                    bat "ls"
+                    bat "aws s3 cp ${SECRETS_LOCATION} ./"
+                    bat "aws s3 cp ${CONFIG_LOCATION} ./"   
+                }
+            }
+        }
+        
+        stage('Run terraform/Update Kubeconfig'){
+            steps{
+                dir('terraform/prod'){
+                    withAWS(credentials: 'AWS_BLACK_EYED_BEANS', region: "${AWS_DEFAULT_REGION}") {
+                        bat 'terraform init'
+                        bat 'terraform plan'
+                        bat 'terraform apply -auto-approve'
+                        bat "aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name ${CLUSTER_NAME}"
+                    }
+                }
+            }
+        }
+        stage('Create Docker Login token for new Account'){
+            steps{
+            //Login to the AWS as well as Docker
+                withAWS(credentials: 'AWS_BLACK_EYED_BEANS', region: "${AWS_DEFAULT_REGION}") {
+                    bat "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ID_BEB}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+                }
+            }
+        }
+        stage('Add Configmap/ Update Deployments'){
+            steps{
+                dir('Kubernetes/Prod'){
+                    withAWS(credentials: 'AWS_BLACK_EYED_BEANS', region: "${AWS_DEFAULT_REGION}") {
+                        bat 'kubectl get deployments'
+                        bat 'kubectl apply -f sql-configmap.yml'
+                        bat "kubectl apply -f eks-secrets.yml"
+                        bat "kubectl apply -f microservices/EKS-Bank-microservice.yml"
+                        bat "kubectl apply -f microservices/EKS-User-microservice.yml"
+                        bat "kubectl apply -f microservices/EKS-underwriter-microservice.yml"
+                        bat "kubectl apply -f microservices/EKS-transaction-microservice.yml"
+                    }
+                }
+            }
+            
+        }
+        
+     }
+    
+}

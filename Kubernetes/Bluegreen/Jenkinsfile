@@ -1,0 +1,101 @@
+/* 
+Implement different scenarios for bluegreen deployment
+
+Scenario 1 Cluster was just created and no Microservices are running
+Spin up All microservices under Blue
+
+Scenario 2 Cluster has Blue Deployments only
+Spin up Green Deployments, Delete Blue Deployments when ready
+
+Scenario 3 Cluster has Green Deployments only
+Spin up Blue Deployments, Delete Green Deployments when ready
+
+Scenario 4 Cluster has both Blue and Green deployments
+Rollback from Blue -> Green or Green->Blue
+
+MERGE SCENARIO 2 and 3 Based on OLD_COLOR and DEPLOYMENT_COLOR
+*/
+
+pipeline {
+    agent any
+    
+    environment{
+        DEPLOYMENT_COLOR = ""
+        OLD_COLOR = ""
+    
+    }
+    
+    stages {
+
+        //Scenario 1 Spin up all microservices under "blue"
+        stage('Create All microservices') {
+            steps{
+                script{
+                    env.DEPLOYMENT_COLOR = "blue"
+                }
+                bat 'kubectl apply -f bank-microservice-bg'
+                bat 'kubectl apply -f transaction-microservice-bg'
+                bat 'kubectl apply -f user-microservice-bg'
+                bat 'kubectl apply -f underwriter-microservice-bg'
+            }
+        }
+
+
+        //Scenario 2 Create Green Deployments, Destroy "Blue" 
+        stage(""){
+            steps{
+                script{
+                    env.OLD_COLOR = "blue"
+                    env.DEPLOYMENT_COLOR = "green"
+                }
+                bat 'kubectl apply -f bank-microservice-bg'
+                bat 'kubectl apply -f transaction-microservice-bg'
+                bat 'kubectl apply -f user-microservice-bg'
+                bat 'kubectl apply -f underwriter-microservice-bg'
+
+                bat "kubectl delete deploy bank-deployment-${OLD_COLOR} -n st-aline"
+                bat "kubectl delete deploy transaction-deployment-${OLD_COLOR} -n st-aline"
+                bat "kubectl delete deploy underwriter-deployment-${OLD_COLOR} -n st-aline"
+                bat "kubectl delete deploy user-deployment-${OLD_COLOR} -n st-aline"
+            }
+        }
+ 
+        //Scenario 3 Create Blue Deployments, Destroy green
+        stage(''){
+            steps{
+                script{
+                    env.OLD_COLOR = "green"
+                    env.DEPLOYMENT_COLOR = "blue"
+                }
+                bat 'kubectl apply -f bank-microservice-bg'
+                bat 'kubectl apply -f transaction-microservice-bg'
+                bat 'kubectl apply -f user-microservice-bg'
+                bat 'kubectl apply -f underwriter-microservice-bg'
+
+                bat "kubectl delete deploy bank-deployment-${OLD_COLOR} -n st-aline"
+                bat "kubectl delete deploy transaction-deployment-${OLD_COLOR} -n st-aline"
+                bat "kubectl delete deploy underwriter-deployment-${OLD_COLOR} -n st-aline"
+                bat "kubectl delete deploy user-deployment-${OLD_COLOR} -n st-aline"
+            }
+        }
+        
+
+        //Scenario 4 Both deployments are there, a Rollback is called and the new deployment is reverted to the old deployment
+        stage(''){
+            steps{
+                //Ingress controller point toward old deployments.
+
+
+                //Delete the faulty new deployments
+                bat "kubectl delete deploy bank-deployment-${NEW_COLOR} -n st-aline"
+                bat "kubectl delete deploy transaction-deployment-${NEW_COLOR} -n st-aline"
+                bat "kubectl delete deploy underwriter-deployment-${NEW_COLOR} -n st-aline"
+                bat "kubectl delete deploy user-deployment-${NEW_COLOR} -n st-aline"
+
+            }
+        }
+    
+        
+     }
+    
+}
