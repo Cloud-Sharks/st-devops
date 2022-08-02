@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-ingress
+  namespace: st-aline-canary
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"        
+    nginx.ingress.kubernetes.io/canary-weight: "10"    # Forward 10% of the traffic to the canary ingress.
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: localhost
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: bank-ms-b
+              port:
+                number: 8096
