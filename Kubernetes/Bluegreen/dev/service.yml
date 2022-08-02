@@ -9,13 +9,13 @@ spec:
   ports:
     - name: underwriter-backend
       port: 8073
-      targetPort: under-{UNDER_COLOR}
+      targetPort: under-${UNDER_COLOR}
     - name: user-backend
       port: 8089
-      targetPort: user-{USER_COLOR}
+      targetPort: user-${USER_COLOR}
     - name: trans-backend
       port: 8072
-      targetPort: trans-{TRANS_COLOR}
+      targetPort: trans-${TRANS_COLOR}
     - name: bank-backend
       port: 8091
-      targetPort: bank-{BANK_COLOR}
+      targetPort: bank-${BANK_COLOR}
