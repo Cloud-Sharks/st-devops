@@ -1,28 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: transaction-green
+  name: trans-green
   namespace: st-aline
   labels:
-    app: transaction-green
+    app: trans-green
 spec:
   replicas: 1
   revisionHistoryLimit: 1
   selector:
     matchLabels:
-      app: transaction-green
+      app: trans-green
   template:
     metadata:
       labels:
-        app: transaction-green
+        app: trans-green
         role: microservice
         color: green
     spec:
       containers:
-      - name: aline-transaction-ms
-        image: stevetan/transaction-microservice:1.1
+      - name: aline-trans-ms
+        image: stevetan/transaction-microservice:1.2
         ports:
-        - name: transaction-green
+        - name: trans-green
           containerPort: 8072
         env:
           - name: APP_PORT

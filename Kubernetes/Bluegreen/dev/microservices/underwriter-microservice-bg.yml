@@ -1,9 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: underwriter-microservice-deployment
+  name: underwriter-deployment-${DEPLOYMENT_COLOR}
+  namespace: st-aline
   labels:
-    app: underwriter-microservice-${DEPLOYMENT_COLOR}
+    app: underwriter-${DEPLOYMENT_COLOR}
 spec:
   replicas: 1
   revisionHistoryLimit: 1

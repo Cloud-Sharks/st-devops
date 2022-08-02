@@ -1,28 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: transaction-blue
+  name: trans-blue
   namespace: st-aline
   labels:
-    app: transaction-blue
+    app: trans-blue
 spec:
   replicas: 1
   revisionHistoryLimit: 1
   selector:
     matchLabels:
-      app: transaction-blue
+      app: trans-blue
   template:
     metadata:
       labels:
-        app: transaction-blue
+        app: trans-blue
         role: microservice
         color: blue
     spec:
       containers:
-      - name: aline-transaction-ms
-        image: stevetan/transaction-microservice:1.1
+      - name: aline-trans-ms
+        image: stevetan/transaction-microservice:1.2
         ports:
-        - name: transaction-blue
+        - name: trans-blue
           containerPort: 8072
         env:
           - name: APP_PORT
