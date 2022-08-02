@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+    
+    environment{
+        DEPLOYMENT_COLOR = ""
+        OLD_COLOR = ""
+        GIT_URL = "https://github.com/Cloud-Sharks/st-devops"
+        DEPLOYMENT_TYPE = ""
+    }
+    
+    stages {
+        
+        stage('Clone repo') {
+            //clones the repo then checkout the branch name given.
+            steps {
+                git "${GIT_URL}"
+                bat "git checkout bluegreen"
+            }
+        }
+
+        stage('Switch/make sure im on right context') {
+            steps {
+                bat 'kubectl config use-context minikube'
+            }
+        }
+        stage('Find the color of the current Deployment'){
+            steps {
+                script{
+                    //Find the current deployment color
+                    def output = bat returnStdout: true, script: "kubectl get deployments -n st-aline"
+                        if (output =~ "${DEPLOYMENT_TYPE}-green" && output =~ "${DEPLOYMENT_TYPE}-blue"){
+                            OLD_COLOR = " Both are deployments are running"
+                            DEPLOYMENT_COLOR = " Both are deployments are running"
+                        }
+                        else if(output =~ "${DEPLOYMENT_TYPE}-green"){
+                            OLD_COLOR = "GREEN"
+                            DEPLOYMENT_COLOR = 'BLUE'
+                        }
+                        else{
+                            OLD_COLOR = "BLUE"
+                            DEPLOYMENT_COLOR = 'GREEN'
+                        }
+                }
+                bat "echo ${OLD_COLOR}"
+                bat "echo ${DEPLOYMENT_COLOR}"
+            }
+        }
+        stage ('Apply new Deployment'){
+          steps{
+              script{
+                  if (OLD_COLOR == 'GREEN'){
+                      bat 'kubectl apply -f kubernetes/bluegreen/dev/microservices/${DEPLOYMENT_TYPE}-microservice-blue.yml -n st-aline'
+                      bat 'sleep 60'
+                      bat 'kubectl delete deployment ${DEPLOYMENT_TYPE}-green -n st-aline'
+                  } 
+                  else if (OLD_COLOR == 'BLUE'){
+                      bat 'kubectl apply -f kubernetes/bluegreen/dev/microservices/${DEPLOYMENT_TYPE}-microservice-green.yml -n st-aline'
+                      bat 'sleep 60'
+                      bat 'kubectl delete deployment ${DEPLOYMENT_TYPE}-blue -n st-aline'
+                  }
+                  bat "kubectl get deployments -n st-aline"
+              }
+          }
+        }
+     }
+}

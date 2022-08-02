@@ -17,7 +17,7 @@ spec:
         app: user-green
     spec:
       containers:
-        - name: user-green
+        - name: aline-user-ms
           image: stevetan/user-microservice:1.1
           ports:
             - containerPort: 8089

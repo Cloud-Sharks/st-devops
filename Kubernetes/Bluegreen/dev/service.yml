@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aline-service
+  namespace: st-aline
+spec:
+  selector:
+    role: microservice
+  ports:
+    - name: underwriter-backend
+      port: 8073
+      targetPort: under-{UNDER_COLOR}
+    - name: user-backend
+      port: 8089
+      targetPort: user-{USER_COLOR}
+    - name: trans-backend
+      port: 8072
+      targetPort: trans-{TRANS_COLOR}
+    - name: bank-backend
+      port: 8091
+      targetPort: bank-{BANK_COLOR}

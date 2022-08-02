@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: underwriter-green
+  name: under-green
   namespace: st-aline
   labels:
-    app: underwriter-green
+    app: under-green
 spec:
   replicas: 1
   revisionHistoryLimit: 1
   selector:
     matchLabels:
-      app: underwriter-green
+      app: under-green
   template:
     metadata:
       labels:
-        app: underwriter-green
+        app: under-green
     spec:
       containers:
-        - name: underwriter-green
+        - name: aline-underwriter-ms
           image: stevetan/underwriter-microservice:1.1
           ports:
             - containerPort: 8073

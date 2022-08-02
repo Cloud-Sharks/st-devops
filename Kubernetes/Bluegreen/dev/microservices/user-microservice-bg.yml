@@ -17,7 +17,7 @@ spec:
         app: user-${DEPLOYMENT_COLOR}
     spec:
       containers:
-        - name: user-${DEPLOYMENT_COLOR}
+        - name: aline-user-ms
           image: stevetan/user-microservice:1.1
           ports:
             - containerPort: 8089

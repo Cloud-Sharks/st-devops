@@ -17,7 +17,7 @@ spec:
         app: underwriter-${DEPLOYMENT_COLOR}
     spec:
       containers:
-        - name: underwriter-${DEPLOYMENT_COLOR}
+        - name: aline-underwriter-ms
           image: stevetan/underwriter-microservice:1.1
           ports:
             - containerPort: 8073

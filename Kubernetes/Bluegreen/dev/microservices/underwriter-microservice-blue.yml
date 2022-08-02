@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: underwriter-blue
+  name: under-blue
   namespace: st-aline
   labels:
-    app: underwriter-blue
+    app: under-blue
 spec:
   replicas: 1
   revisionHistoryLimit: 1
   selector:
     matchLabels:
-      app: underwriter-blue
+      app: under-blue
   template:
     metadata:
       labels:
-        app: underwriter-blue
+        app: under-blue
     spec:
       containers:
-        - name: underwriter-blue
+        - name: aline-under-ms
           image: stevetan/underwriter-microservice:1.1
           ports:
             - containerPort: 8073
