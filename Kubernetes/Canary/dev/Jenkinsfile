@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+    
+    environment{
+        GIT_URL = "https://github.com/Cloud-Sharks/st-devops"
+        BRANCH_URL = "canary"
+        MICROSERVICE_NAME = "bank"
+    }
+    
+    stages {
+        
+        stage('Clone repo') {
+            //clones the repo then checkout the branch name given.
+            steps {
+                git "${GIT_URL}"
+                bat "git checkout ${BRANCH_URL}"
+            }
+        }
+        
+        stage('Switch/make sure im on right context') {
+            steps {
+                bat 'kubectl config use-context minikube'
+            }
+        }
+       
+        stage('Apply service and Canary-ingress'){
+            steps {
+                bat "kubectl apply -f kubernetes/canary/dev/microservices/${MICROSERVICE_NAME}-microservice-canary.yml"
+                bat "kubectl apply -f kubernetes/canary/dev/canary-ingress.yml"
+            }
+        }
+    }
+}
